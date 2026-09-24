@@ -8,6 +8,21 @@
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#f4f5f7;--sidebar:#1e293b;--sidebar-hover:#334155;--sidebar-active:#0f172a;--accent:#3b82f6;--green:#16a34a;--red:#dc2626;--orange:#f59e0b;--text:#1e293b;--text2:#64748b;--white:#fff;--border:#e2e8f0;--row-alt:#f8fafc}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px;display:flex;height:100vh;overflow:hidden}
+/* Login overlay */
+.login-overlay{position:fixed;inset:0;background:var(--sidebar);display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-card{background:var(--white);border-radius:16px;padding:40px;width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-card .login-logo{margin-bottom:20px}
+.login-card .login-logo svg{width:48px;height:48px}
+.login-card h2{font-size:20px;margin-bottom:4px;color:var(--text)}
+.login-card .login-sub{color:var(--text2);font-size:13px;margin-bottom:24px}
+.login-card input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:15px;text-align:center;letter-spacing:2px;outline:none;transition:.2s}
+.login-card input:focus{border-color:var(--accent)}
+.login-card input.error{border-color:var(--red);animation:shake .4s}
+.login-card button{width:100%;margin-top:12px;padding:12px;background:var(--sidebar);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.login-card button:hover{background:var(--accent)}
+.login-card .login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px}
+.login-card .login-loading{color:var(--text2);font-size:12px;margin-top:8px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 /* Sidebar */
 .sidebar{width:220px;min-width:220px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;z-index:10}
 .sidebar .logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
@@ -88,6 +103,23 @@ tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--bo
 </head>
 <body>
 
+<!-- Login Screen -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="12" fill="#1e293b"/><path d="M10 24L18 13L26 24L34 13L42 24" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 35L18 24L26 35L34 24L42 35" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg>
+    </div>
+    <h2>METALICA ZUEV</h2>
+    <div class="login-sub">Аналитика валовой прибыли</div>
+    <input type="password" id="loginPassword" placeholder="Введите пароль" autocomplete="off">
+    <button id="loginBtn" onclick="doLogin()">Войти</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- Dashboard (hidden until auth) -->
+<div id="dashboardWrap" style="display:none;width:100%;height:100%;display:none">
+
 <div class="sidebar">
   <div class="logo">
     <svg viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="#3b82f6"/><path d="M8 18L14 10L20 18L26 10L32 18" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 26L14 18L20 26L26 18L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg>
@@ -123,6 +155,8 @@ tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--bo
     <div class="page" id="page-structure"></div>
   </div>
 </div>
+
+</div><!-- /dashboardWrap -->
 
 <script>
 // Data will be loaded here
@@ -569,7 +603,74 @@ function setupSortHandlers(container) {
 
 // === LOAD DATA ===
 </script>
-<script src="data.js"></script>
-<script>init(DATA);</script>
+<script src="data.enc.js"></script>
+<script>
+// === CRYPTO: AES-256-GCM decryption via Web Crypto API ===
+async function decryptData(password, encB64) {
+  const raw = Uint8Array.from(atob(encB64), c => c.charCodeAt(0));
+  const salt = raw.slice(0, 16);
+  const iv = raw.slice(16, 28);
+  const ct = raw.slice(28);
+  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return new TextDecoder().decode(decrypted);
+}
+
+async function doLogin() {
+  const pwd = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginErr');
+  const btn = document.getElementById('loginBtn');
+  const inp = document.getElementById('loginPassword');
+  if (!pwd) { errEl.textContent = 'Введите пароль'; inp.classList.add('error'); return; }
+  btn.textContent = 'Расшифровка…';
+  btn.disabled = true;
+  errEl.textContent = '';
+  inp.classList.remove('error');
+  await new Promise(r => setTimeout(r, 50));
+  try {
+    const json = await decryptData(pwd, ENCRYPTED_DATA);
+    const data = JSON.parse(json);
+    sessionStorage.setItem('mz_auth', pwd);
+    document.getElementById('loginOverlay').style.display = 'none';
+    const dw = document.getElementById('dashboardWrap');
+    dw.style.display = 'flex';
+    init(data);
+  } catch (e) {
+    btn.textContent = 'Войти';
+    btn.disabled = false;
+    errEl.textContent = 'Неверный пароль';
+    inp.classList.add('error');
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+(async function() {
+  const saved = sessionStorage.getItem('mz_auth');
+  if (saved) {
+    try {
+      const json = await decryptData(saved, ENCRYPTED_DATA);
+      const data = JSON.parse(json);
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.getElementById('dashboardWrap').style.display = 'flex';
+      init(data);
+    } catch(e) {
+      sessionStorage.removeItem('mz_auth');
+      document.getElementById('loginPassword').focus();
+    }
+  } else {
+    document.getElementById('loginPassword').focus();
+  }
+})();
+</script>
 </body>
 </html>
