@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metalica Zuev — Валовая прибыль</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f4f5f7;--sidebar:#1e293b;--sidebar-hover:#334155;--sidebar-active:#0f172a;--accent:#3b82f6;--green:#16a34a;--red:#dc2626;--orange:#f59e0b;--text:#1e293b;--text2:#64748b;--white:#fff;--border:#e2e8f0;--row-alt:#f8fafc}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px;display:flex;height:100vh;overflow:hidden}
+/* Sidebar */
+.sidebar{width:220px;min-width:220px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;z-index:10}
+.sidebar .logo{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}
+.sidebar .logo svg{width:36px;height:36px;flex-shrink:0}
+.sidebar .logo-text{font-size:15px;font-weight:700;line-height:1.2}
+.sidebar .logo-text span{display:block;font-size:11px;font-weight:400;color:#94a3b8}
+.sidebar nav{flex:1;padding:12px 0}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:10px 16px;color:#cbd5e1;text-decoration:none;font-size:13px;transition:.15s;cursor:pointer;border-left:3px solid transparent}
+.sidebar nav a:hover{background:var(--sidebar-hover);color:#fff}
+.sidebar nav a.active{background:var(--sidebar-active);color:#fff;border-left-color:var(--accent)}
+.sidebar nav a svg{width:18px;height:18px;flex-shrink:0;opacity:.7}
+.sidebar nav a.active svg{opacity:1}
+/* Main */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.topbar .year{font-weight:700;font-size:15px;color:var(--text)}
+.month-chips{display:flex;gap:4px}
+.month-chip{padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text2);transition:.15s;user-select:none}
+.month-chip.active{background:var(--sidebar);color:#fff;border-color:var(--sidebar)}
+.month-chip:hover{border-color:var(--accent)}
+.topbar .warehouse-filter{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.topbar select{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--white)}
+/* Content */
+.content{flex:1;overflow-y:auto;padding:20px 24px}
+.page{display:none}
+.page.active{display:block}
+/* KPI Cards */
+.kpi-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.kpi-card{flex:1;min-width:160px;background:var(--white);border-radius:10px;padding:14px 16px;border:1px solid var(--border)}
+.kpi-card .kpi-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.kpi-card .kpi-value{font-size:22px;font-weight:700;color:var(--text)}
+.kpi-card .kpi-sub{font-size:11px;color:var(--text2);margin-top:2px}
+/* Tables */
+.tbl-wrap{background:var(--white);border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.tbl-title{padding:12px 16px;font-weight:600;font-size:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:1}
+th:hover{color:var(--text)}
+th.num,td.num{text-align:right}
+th .sort-arrow{font-size:9px;margin-left:3px;opacity:.4}
+th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+td{padding:7px 10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+tr:hover td{background:#f0f4ff}
+tr.group-row{cursor:pointer}
+tr.group-row td{font-weight:600;background:#f8fafc}
+tr.group-row:hover td{background:#eef2ff}
+tr.group-row td:first-child{padding-left:12px}
+tr.item-row td{font-weight:400;color:#475569}
+tr.item-row td:first-child{padding-left:32px}
+tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--border)}
+.expand-icon{display:inline-block;width:16px;font-size:10px;color:var(--text2);transition:.15s}
+.expanded .expand-icon{transform:rotate(90deg)}
+/* Cell colors */
+.pos{color:var(--green)}.neg{color:var(--red)}.warn{color:var(--orange)}
+/* Compact month cell */
+.mcell{line-height:1.4}
+.mcell .mcell-rev{font-weight:600;font-size:12px}
+.mcell .mcell-sub{font-size:10px;color:var(--text2)}
+/* Channel cards */
+.channel-cards{display:flex;gap:12px;margin-bottom:16px}
+.channel-card{flex:1;background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px}
+.channel-card h3{font-size:14px;margin-bottom:10px}
+.channel-card .ch-val{font-size:20px;font-weight:700}
+.channel-card .ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:12px}
+.channel-card .ch-grid .ch-lbl{color:var(--text2)}
+/* Utility */
+.badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-red{background:#fef2f2;color:#991b1b}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.hidden{display:none!important}
+.section-title{font-size:16px;font-weight:700;margin-bottom:12px}
+/* Summary grid */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1200px){.summary-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <svg viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="#3b82f6"/><path d="M8 18L14 10L20 18L26 10L32 18" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 26L14 18L20 26L26 18L32 26" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/></svg>
+    <div class="logo-text">METALICA ZUEV<span>Валовая прибыль</span></div>
+  </div>
+  <nav id="nav">
+    <a data-page="summary" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Сводная</a>
+    <a data-page="products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Товары</a>
+    <a data-page="months"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Месяцы</a>
+    <a data-page="managers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Менеджеры</a>
+    <a data-page="clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Клиенты</a>
+    <a data-page="groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 3v18"/></svg>Группы товаров</a>
+    <a data-page="structure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>Анализ структуры</a>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <span class="year">2026</span>
+    <div class="month-chips" id="monthChips"></div>
+    <div class="warehouse-filter">
+      Склад: <select id="whFilter"><option value="">Все</option></select>
+    </div>
+  </div>
+  <div class="content" id="content">
+    <!-- Pages rendered by JS -->
+    <div class="page active" id="page-summary"></div>
+    <div class="page" id="page-products"></div>
+    <div class="page" id="page-months"></div>
+    <div class="page" id="page-managers"></div>
+    <div class="page" id="page-clients"></div>
+    <div class="page" id="page-groups"></div>
+    <div class="page" id="page-structure"></div>
+  </div>
+</div>
+
+<script>
+// Data will be loaded here
+let DATA = null;
+let activeMonths = new Set();
+let activePage = 'summary';
+
+// === FORMATTING ===
+function fmt(n, dec=0) {
+  if (n == null || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return (n/1e6).toFixed(1).replace('.', ',') + ' млн';
+  if (abs >= 1e3) return Math.round(n).toLocaleString('ru-RU');
+  return n.toFixed(dec).replace('.', ',');
+}
+function fmtFull(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Math.round(n).toLocaleString('ru-RU');
+}
+function fmtPct(n) { return n == null || isNaN(n) ? '—' : n.toFixed(2).replace('.', ',') + '%'; }
+function fmtTons(n) { return n == null || isNaN(n) ? '—' : n.toFixed(2).replace('.', ','); }
+function marginClass(m) { return m < 5 ? 'neg' : m < 10 ? 'warn' : m >= 15 ? 'pos' : ''; }
+
+function monthCell(d) {
+  if (!d || d.revenue === 0) return '<td class="num mcell"><span style="color:#ccc">—</span></td>';
+  return `<td class="num mcell"><div class="mcell-rev">${fmt(d.revenue)}</div><div class="mcell-sub"><span class="${marginClass(d.margin)}">${fmtPct(d.margin)}</span> · ${fmt(d.gp)}</div></td>`;
+}
+
+// === INIT ===
+function init(data) {
+  DATA = data;
+  activeMonths = new Set(data.months);
+  buildMonthChips();
+  buildWarehouseFilter();
+  setupNav();
+  renderAll();
+}
+
+function buildMonthChips() {
+  const el = document.getElementById('monthChips');
+  el.innerHTML = DATA.month_names.map((n, i) => 
+    `<div class="month-chip active" data-month="${DATA.months[i]}">${n}</div>`
+  ).join('');
+  el.querySelectorAll('.month-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const m = parseInt(chip.dataset.month);
+      if (activeMonths.has(m)) { activeMonths.delete(m); chip.classList.remove('active'); }
+      else { activeMonths.add(m); chip.classList.add('active'); }
+      renderAll();
+    });
+  });
+}
+
+function buildWarehouseFilter() {
+  const sel = document.getElementById('whFilter');
+  DATA.warehouses.forEach(w => { const o = document.createElement('option'); o.value = w; o.textContent = w; sel.appendChild(o); });
+}
+
+function setupNav() {
+  document.querySelectorAll('#nav a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.querySelectorAll('#nav a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      activePage = a.dataset.page;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + activePage).classList.add('active');
+      renderAll();
+    });
+  });
+}
+
+function filterMonthly(arr) { return arr.filter(d => activeMonths.has(d.month)); }
+function sumFiltered(arr, key) { return filterMonthly(arr).reduce((s, d) => s + (d[key]||0), 0); }
+
+function recalcKPI() {
+  const months = DATA.monthly.filter(d => activeMonths.has(d.month));
+  const rev = months.reduce((s,d) => s+d.revenue, 0);
+  const cost = months.reduce((s,d) => s+d.cost, 0);
+  const tons = months.reduce((s,d) => s+d.tons, 0);
+  const gp = rev - cost;
+  return { revenue: rev, cost, gp, margin: rev ? gp/rev*100 : 0, tons, gp_per_ton: tons ? gp/tons : 0 };
+}
+
+// === SORTING ===
+function sortTable(table, col, numeric=true) {
+  const tbody = table.querySelector('tbody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr.sortable-row'));
+  const th = table.querySelectorAll('th')[col];
+  const asc = th.classList.contains('sorted-asc');
+  table.querySelectorAll('th').forEach(h => { h.classList.remove('sorted','sorted-asc','sorted-desc'); });
+  th.classList.add('sorted', asc ? 'sorted-desc' : 'sorted-asc');
+  rows.sort((a, b) => {
+    let va = a.cells[col]?.getAttribute('data-val') || a.cells[col]?.textContent || '';
+    let vb = b.cells[col]?.getAttribute('data-val') || b.cells[col]?.textContent || '';
+    if (numeric) { va = parseFloat(va.replace(/[^\d,.\-]/g,'').replace(',','.')) || 0; vb = parseFloat(vb.replace(/[^\d,.\-]/g,'').replace(',','.')) || 0; }
+    return asc ? va - vb : vb - va;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// === RENDER ===
+function renderAll() {
+  const kpi = recalcKPI();
+  if (activePage === 'summary') renderSummary(kpi);
+  else if (activePage === 'products') renderProducts(kpi);
+  else if (activePage === 'months') renderMonths(kpi);
+  else if (activePage === 'managers') renderManagers(kpi);
+  else if (activePage === 'clients') renderClients(kpi);
+  else if (activePage === 'groups') renderGroups(kpi);
+  else if (activePage === 'structure') renderStructure(kpi);
+}
+
+function renderKPICards(kpi) {
+  return `<div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">💰 Выручка без НДС</div><div class="kpi-value">${fmt(kpi.revenue)}</div><div class="kpi-sub">лей</div></div>
+    <div class="kpi-card"><div class="kpi-label">📦 Себестоимость</div><div class="kpi-value">${fmt(kpi.cost)}</div><div class="kpi-sub">лей</div></div>
+    <div class="kpi-card"><div class="kpi-label">📈 Валовая прибыль</div><div class="kpi-value">${fmt(kpi.gp)}</div><div class="kpi-sub">лей</div></div>
+    <div class="kpi-card"><div class="kpi-label">% Маржа</div><div class="kpi-value ${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">⚖️ Объём</div><div class="kpi-value">${fmtTons(kpi.tons)}</div><div class="kpi-sub">тонн</div></div>
+    <div class="kpi-card"><div class="kpi-label">💎 Прибыль/т</div><div class="kpi-value">${fmtFull(Math.round(kpi.gp_per_ton))}</div><div class="kpi-sub">лей/т</div></div>
+  </div>`;
+}
+
+// === SUMMARY ===
+function renderSummary(kpi) {
+  const el = document.getElementById('page-summary');
+  const grps = DATA.product_groups.map(g => {
+    const rev = sumFiltered(g.monthly, 'revenue');
+    const gp = sumFiltered(g.monthly, 'gp');
+    const tons = sumFiltered(g.monthly, 'tons');
+    return { name: g.name, rev, gp, margin: rev ? gp/rev*100 : 0, tons, gp_t: tons ? gp/tons : 0, share_gp: kpi.gp ? gp/kpi.gp*100 : 0, share_tons: kpi.tons ? tons/kpi.tons*100 : 0 };
+  }).sort((a,b) => b.rev - a.rev);
+  
+  const cls = DATA.clients.filter(c => c.type === 'Опт').slice(0, 10);
+  const mgrs = DATA.managers.slice(0, 10);
+  
+  el.innerHTML = renderKPICards(kpi) + `
+  <div class="channel-cards">
+    ${DATA.channels.map(ch => {
+      const rev = ch.revenue; // simplified for summary
+      return `<div class="channel-card"><h3>${ch.type === 'Опт' ? '🏢 Опт' : '🛒 Розница'}</h3>
+        <div class="ch-val">${fmt(ch.revenue)}</div>
+        <div class="ch-grid">
+          <span class="ch-lbl">Клиентов</span><span>${ch.clients}</span>
+          <span class="ch-lbl">Маржа</span><span class="${marginClass(ch.margin)}">${fmtPct(ch.margin)}</span>
+          <span class="ch-lbl">Прибыль/т</span><span>${fmtFull(Math.round(ch.gp_per_ton))}</span>
+          <span class="ch-lbl">Доля прибыли</span><span>${(ch.gp / kpi.gp * 100).toFixed(1)}%</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="summary-grid">
+    <div class="tbl-wrap"><div class="tbl-title">Группы товаров</div>
+      <table><thead><tr><th>Группа</th><th class="num">Тоннаж</th><th class="num">Прибыль</th><th class="num">Маржа</th><th class="num">Приб./т</th></tr></thead>
+      <tbody>${grps.map(g => `<tr class="sortable-row"><td>${g.name}</td><td class="num" data-val="${g.tons}">${fmtTons(g.tons)}</td><td class="num" data-val="${g.gp}">${fmt(g.gp)}</td><td class="num ${marginClass(g.margin)}" data-val="${g.margin}">${fmtPct(g.margin)}</td><td class="num" data-val="${g.gp_t}">${fmtFull(Math.round(g.gp_t))}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="tbl-wrap"><div class="tbl-title">ТОП клиенты (опт)</div>
+      <table><thead><tr><th>Клиент</th><th class="num">Оборот</th><th class="num">Прибыль</th><th class="num">Маржа</th></tr></thead>
+      <tbody>${cls.map(c => `<tr class="sortable-row"><td>${c.name}</td><td class="num" data-val="${c.revenue}">${fmt(c.revenue)}</td><td class="num" data-val="${c.gp}">${fmt(c.gp)}</td><td class="num ${marginClass(c.margin)}" data-val="${c.margin}">${fmtPct(c.margin)}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+    <div class="tbl-wrap"><div class="tbl-title">Менеджеры (розница)</div>
+      <table><thead><tr><th>Менеджер</th><th class="num">Транзакций</th><th class="num">Оборот</th><th class="num">Маржа</th><th class="num">Приб./т</th></tr></thead>
+      <tbody>${mgrs.map(m => `<tr class="sortable-row"><td>${m.name}</td><td class="num" data-val="${m.transactions}">${m.transactions}</td><td class="num" data-val="${m.revenue}">${fmt(m.revenue)}</td><td class="num ${marginClass(m.margin)}" data-val="${m.margin}">${fmtPct(m.margin)}</td><td class="num" data-val="${m.gp_per_ton}">${fmtFull(Math.round(m.gp_per_ton))}</td></tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+  setupSortHandlers(el);
+}
+
+// === PRODUCTS ===
+function renderProducts(kpi) {
+  const el = document.getElementById('page-products');
+  const months = DATA.months.filter(m => activeMonths.has(m));
+  const monthHeaders = months.map(m => `<th class="num">${DATA.month_names[DATA.months.indexOf(m)]}</th>`).join('');
+  
+  let rows = '';
+  DATA.product_groups.forEach((g, gi) => {
+    const rev = sumFiltered(g.monthly, 'revenue');
+    const gp = sumFiltered(g.monthly, 'gp');
+    const tons = sumFiltered(g.monthly, 'tons');
+    const margin = rev ? gp/rev*100 : 0;
+    
+    const mCells = months.map(m => {
+      const d = g.monthly.find(x => x.month === m);
+      return monthCell(d);
+    }).join('');
+    
+    rows += `<tr class="group-row sortable-row" data-group="${gi}" onclick="toggleGroup(this, ${gi})">
+      <td><span class="expand-icon">▸</span> ${g.name}</td>
+      <td class="num" data-val="${rev}"><div class="mcell"><div class="mcell-rev">${fmt(rev)}</div><div class="mcell-sub"><span class="${marginClass(margin)}">${fmtPct(margin)}</span> · ${fmt(gp)}</div><div class="mcell-sub">${fmtTons(tons)} т</div></div></td>
+      ${mCells}</tr>`;
+    
+    g.items.forEach(item => {
+      const irev = sumFiltered(item.monthly, 'revenue');
+      const igp = sumFiltered(item.monthly, 'gp');
+      const itons = sumFiltered(item.monthly, 'tons');
+      const imargin = irev ? igp/irev*100 : 0;
+      const imCells = months.map(m => { const d = item.monthly.find(x => x.month === m); return monthCell(d); }).join('');
+      rows += `<tr class="item-row hidden" data-parent="${gi}">
+        <td>${item.name}</td>
+        <td class="num" data-val="${irev}"><div class="mcell"><div class="mcell-rev">${fmt(irev)}</div><div class="mcell-sub"><span class="${marginClass(imargin)}">${fmtPct(imargin)}</span> · ${fmt(igp)}</div></div></td>
+        ${imCells}</tr>`;
+    });
+  });
+  
+  // Total row
+  const tMCells = months.map(m => { const d = DATA.monthly.find(x => x.month === m); return monthCell(d); }).join('');
+  rows += `<tr class="total-row"><td>Итого</td>
+    <td class="num"><div class="mcell"><div class="mcell-rev">${fmt(kpi.revenue)}</div><div class="mcell-sub"><span class="${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</span> · ${fmt(kpi.gp)}</div><div class="mcell-sub">${fmtTons(kpi.tons)} т</div></div></td>
+    ${tMCells}</tr>`;
+  
+  el.innerHTML = renderKPICards(kpi) + `
+  <div class="tbl-wrap"><div class="tbl-title">Продажи по номенклатуре</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Номенклатура</th><th class="num">ИТОГО</th>${monthHeaders}</tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+}
+
+function toggleGroup(tr, gi) {
+  tr.classList.toggle('expanded');
+  const table = tr.closest('table');
+  table.querySelectorAll(`tr[data-parent="${gi}"]`).forEach(r => r.classList.toggle('hidden'));
+}
+
+// === MONTHS ===
+function renderMonths(kpi) {
+  const el = document.getElementById('page-months');
+  const months = DATA.monthly.filter(d => activeMonths.has(d.month));
+  let prevGP = null;
+  const rows = months.map(d => {
+    const delta = prevGP !== null ? d.gp - prevGP : null;
+    const deltaPct = prevGP ? (d.gp - prevGP)/prevGP*100 : null;
+    prevGP = d.gp;
+    return `<tr class="sortable-row">
+      <td><strong>${d.name}</strong></td>
+      <td class="num" data-val="${d.revenue}">${fmtFull(Math.round(d.revenue))}</td>
+      <td class="num" data-val="${d.tons}">${fmtTons(d.tons)}</td>
+      <td class="num ${marginClass(d.margin)}" data-val="${d.margin}">${fmtPct(d.margin)}</td>
+      <td class="num" data-val="${d.gp}">${fmtFull(Math.round(d.gp))}</td>
+      <td class="num" data-val="${d.gp_per_ton}">${fmtFull(Math.round(d.gp_per_ton))}</td>
+      <td class="num ${delta !== null ? (delta >= 0 ? 'pos' : 'neg') : ''}" data-val="${delta||0}">${delta !== null ? (delta >= 0 ? '+' : '') + fmt(delta) + (deltaPct !== null ? ' (' + (deltaPct >= 0 ? '+' : '') + deltaPct.toFixed(1) + '%)' : '') : '—'}</td>
+    </tr>`;
+  }).join('');
+  
+  el.innerHTML = renderKPICards(kpi) + `
+  <div class="tbl-wrap"><div class="tbl-title">Результат по месяцам</div>
+    <table id="tblMonths"><thead><tr><th>Месяц</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа %</th><th class="num">Вал. прибыль</th><th class="num">Прибыль/т</th><th class="num">Δ прибыли</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+  </div>`;
+  setupSortHandlers(el);
+}
+
+// === MANAGERS ===
+function renderManagers(kpi) {
+  const el = document.getElementById('page-managers');
+  const months = DATA.months.filter(m => activeMonths.has(m));
+  const mHeaders = months.map(m => `<th class="num">${DATA.month_names[DATA.months.indexOf(m)]}</th>`).join('');
+  
+  const rows = DATA.managers.map(m => {
+    const rev = sumFiltered(m.monthly, 'revenue');
+    const gp = sumFiltered(m.monthly, 'gp');
+    const tons = sumFiltered(m.monthly, 'tons');
+    const margin = rev ? gp/rev*100 : 0;
+    const mCells = months.map(mo => { const d = m.monthly.find(x => x.month === mo); return monthCell(d); }).join('');
+    return `<tr class="sortable-row">
+      <td><strong>${m.name}</strong></td>
+      <td class="num" data-val="${m.transactions}">${m.transactions}</td>
+      <td class="num" data-val="${rev}"><div class="mcell"><div class="mcell-rev">${fmt(rev)}</div><div class="mcell-sub"><span class="${marginClass(margin)}">${fmtPct(margin)}</span> · ${fmt(gp)}</div><div class="mcell-sub">${fmtTons(tons)} т</div></div></td>
+      <td class="num" data-val="${m.gp_per_ton}">${fmtFull(Math.round(m.gp_per_ton))}</td>
+      <td class="num" data-val="${m.avg_check}">${fmtFull(Math.round(m.avg_check))}</td>
+      ${mCells}</tr>`;
+  }).join('');
+  
+  // Retail KPI
+  const rch = DATA.channels.find(c => c.type === 'Розница');
+  el.innerHTML = `
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">🛒 Оборот розницы</div><div class="kpi-value">${fmt(rch.revenue)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">📈 Прибыль розницы</div><div class="kpi-value">${fmt(rch.gp)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">% Маржа розницы</div><div class="kpi-value pos">${fmtPct(rch.margin)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">💎 Прибыль/т</div><div class="kpi-value">${fmtFull(Math.round(rch.gp_per_ton))}</div></div>
+    <div class="kpi-card"><div class="kpi-label">👥 Менеджеров</div><div class="kpi-value">${DATA.managers.length}</div></div>
+  </div>
+  <div class="tbl-wrap"><div class="tbl-title">Менеджеры розничных продаж</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Менеджер</th><th class="num">Транз.</th><th class="num">ИТОГО</th><th class="num">Приб./т</th><th class="num">Ср. чек</th>${mHeaders}</tr></thead>
+    <tbody>${rows}</tbody></table></div>
+  </div>`;
+  setupSortHandlers(el);
+}
+
+// === CLIENTS ===
+function renderClients(kpi) {
+  const el = document.getElementById('page-clients');
+  const opt = DATA.clients.filter(c => c.type === 'Опт').sort((a,b) => b.revenue - a.revenue);
+  const ret = DATA.clients.filter(c => c.type === 'Розница').sort((a,b) => b.revenue - a.revenue);
+  
+  function clientRows(list) {
+    return list.map(c => `<tr class="sortable-row">
+      <td>${c.name}${c.manager ? ` <span class="badge badge-blue">${c.manager}</span>` : ''}</td>
+      <td class="num" data-val="${c.transactions}">${c.transactions}</td>
+      <td class="num" data-val="${c.revenue}">${fmtFull(Math.round(c.revenue))}</td>
+      <td class="num" data-val="${c.tons}">${fmtTons(c.tons)}</td>
+      <td class="num ${marginClass(c.margin)}" data-val="${c.margin}">${fmtPct(c.margin)}</td>
+      <td class="num" data-val="${c.gp}">${fmtFull(Math.round(c.gp))}</td>
+      <td class="num" data-val="${c.gp_per_ton}">${fmtFull(Math.round(c.gp_per_ton))}</td>
+      <td class="num">${c.last_sale || '—'}</td>
+    </tr>`).join('');
+  }
+  
+  // Concentration
+  const allOpt = opt.sort((a,b) => b.gp - a.gp);
+  const totalOptGP = allOpt.reduce((s,c) => s + c.gp, 0);
+  const top10gp = allOpt.slice(0,10).reduce((s,c) => s+c.gp, 0);
+  const top20gp = allOpt.slice(0,20).reduce((s,c) => s+c.gp, 0);
+  const top50gp = allOpt.slice(0,50).reduce((s,c) => s+c.gp, 0);
+  
+  el.innerHTML = renderKPICards(kpi) + `
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">ТОП-10</div><div class="kpi-value">${(top10gp/totalOptGP*100).toFixed(1)}%</div><div class="kpi-sub">прибыли</div></div>
+    <div class="kpi-card"><div class="kpi-label">ТОП-20</div><div class="kpi-value">${(top20gp/totalOptGP*100).toFixed(1)}%</div><div class="kpi-sub">прибыли</div></div>
+    <div class="kpi-card"><div class="kpi-label">ТОП-50</div><div class="kpi-value">${(top50gp/totalOptGP*100).toFixed(1)}%</div><div class="kpi-sub">прибыли</div></div>
+    <div class="kpi-card"><div class="kpi-label">Остальные ${allOpt.length - 50}</div><div class="kpi-value">${((totalOptGP-top50gp)/totalOptGP*100).toFixed(1)}%</div><div class="kpi-sub">прибыли</div></div>
+  </div>
+  <div class="tbl-wrap"><div class="tbl-title">Оптовые клиенты (ТОП-100)</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th><th class="num">Посл. продажа</th></tr></thead>
+    <tbody>${clientRows(opt.sort((a,b)=>b.revenue-a.revenue))}</tbody></table></div>
+  </div>
+  <div class="tbl-wrap"><div class="tbl-title">Розничные клиенты (менеджеры)</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th><th class="num">Посл. продажа</th></tr></thead>
+    <tbody>${clientRows(ret)}</tbody></table></div>
+  </div>`;
+  setupSortHandlers(el);
+}
+
+// === GROUPS ===
+function renderGroups(kpi) {
+  const el = document.getElementById('page-groups');
+  const grps = DATA.product_groups.map(g => {
+    const rev = sumFiltered(g.monthly, 'revenue');
+    const gp = sumFiltered(g.monthly, 'gp');
+    const tons = sumFiltered(g.monthly, 'tons');
+    const cost = rev - gp;
+    return { ...g, fRev: rev, fGP: gp, fTons: tons, fMargin: rev ? gp/rev*100 : 0, fGPT: tons ? gp/tons : 0, fShareTons: kpi.tons ? tons/kpi.tons*100 : 0, fShareRev: kpi.revenue ? rev/kpi.revenue*100 : 0, fShareGP: kpi.gp ? gp/kpi.gp*100 : 0, fPriceT: tons ? rev/tons : 0, fCostT: tons ? (rev-gp)/tons : 0 };
+  }).sort((a,b) => b.fRev - a.fRev);
+  
+  const rows = grps.map(g => `<tr class="sortable-row">
+    <td><strong>${g.name}</strong></td>
+    <td class="num" data-val="${g.fTons}">${fmtTons(g.fTons)}</td>
+    <td class="num" data-val="${g.fShareTons}">${g.fShareTons.toFixed(1)}%</td>
+    <td class="num" data-val="${g.fRev}">${fmtFull(Math.round(g.fRev))}</td>
+    <td class="num" data-val="${g.fShareRev}">${g.fShareRev.toFixed(1)}%</td>
+    <td class="num ${marginClass(g.fMargin)}" data-val="${g.fMargin}">${fmtPct(g.fMargin)}</td>
+    <td class="num" data-val="${g.fGP}">${fmtFull(Math.round(g.fGP))}</td>
+    <td class="num" data-val="${g.fShareGP}">${g.fShareGP.toFixed(1)}%</td>
+    <td class="num" data-val="${g.fGPT}">${fmtFull(Math.round(g.fGPT))}</td>
+    <td class="num" data-val="${g.fShareGP/g.fShareTons}"><span class="${g.fShareGP > g.fShareTons*1.1 ? 'pos' : g.fShareGP < g.fShareTons*0.9 ? 'neg' : ''}">${(g.fShareGP/g.fShareTons).toFixed(2)}</span></td>
+  </tr>`).join('');
+  
+  el.innerHTML = renderKPICards(kpi) + `
+  <div class="tbl-wrap"><div class="tbl-title">Экономика ассортимента</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Группа</th><th class="num">Тонны</th><th class="num">% тонн</th><th class="num">Оборот</th><th class="num">% оборот</th><th class="num">Маржа</th><th class="num">Вал. прибыль</th><th class="num">% прибыли</th><th class="num">Приб./т</th><th class="num">Коэфф.</th></tr></thead>
+    <tbody>${rows}
+    <tr class="total-row"><td>Итого</td><td class="num">${fmtTons(kpi.tons)}</td><td class="num">100%</td><td class="num">${fmtFull(Math.round(kpi.revenue))}</td><td class="num">100%</td><td class="num ${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</td><td class="num">${fmtFull(Math.round(kpi.gp))}</td><td class="num">100%</td><td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td><td class="num">1,00</td></tr>
+    </tbody></table></div>
+  </div>
+  <p style="font-size:11px;color:var(--text2);margin-top:4px">Коэфф. = доля прибыли ÷ доля тоннажа. Зелёный &gt; 1,1 (группа даёт прибыли больше, чем занимает тоннажа). Красный &lt; 0,9 (наоборот).</p>`;
+  setupSortHandlers(el);
+}
+
+// === STRUCTURE ===
+function renderStructure(kpi) {
+  const el = document.getElementById('page-structure');
+  const grps = DATA.product_groups.map(g => {
+    const rev = sumFiltered(g.monthly, 'revenue');
+    const gp = sumFiltered(g.monthly, 'gp');
+    const tons = sumFiltered(g.monthly, 'tons');
+    return { name: g.name, rev, gp, tons, margin: rev?gp/rev*100:0, gpt: tons?gp/tons:0, priceT: tons?rev/tons:0, costT: tons?(rev-gp)/tons:0, shareTons: kpi.tons?tons/kpi.tons*100:0, newTons: tons, delta: 0 };
+  }).sort((a,b)=>b.rev-a.rev);
+  
+  const totalGP = grps.reduce((s,g)=>s+g.gp,0);
+  
+  el.innerHTML = renderKPICards(kpi) + `
+  <div class="tbl-wrap"><div class="tbl-title">Сценарий перераспределения тоннажа <span class="badge badge-blue">модель</span></div>
+    <div class="tbl-scroll"><table><thead><tr><th>Группа</th><th class="num">Факт тонны</th><th class="num">% тоннажа</th><th class="num">Маржа</th><th class="num">Приб./т</th><th class="num">Факт прибыль</th><th class="num" style="background:#eef2ff">Δ тонны</th><th class="num" style="background:#eef2ff">Новые тонны</th><th class="num" style="background:#eef2ff">Расч. прибыль</th><th class="num" style="background:#eef2ff">Δ прибыль</th></tr></thead>
+    <tbody id="structBody">${grps.map((g,i) => `<tr class="sortable-row" data-idx="${i}">
+      <td><strong>${g.name}</strong></td>
+      <td class="num">${fmtTons(g.tons)}</td>
+      <td class="num">${g.shareTons.toFixed(1)}%</td>
+      <td class="num ${marginClass(g.margin)}">${fmtPct(g.margin)}</td>
+      <td class="num">${fmtFull(Math.round(g.gpt))}</td>
+      <td class="num">${fmtFull(Math.round(g.gp))}</td>
+      <td class="num" style="background:#f8faff"><input type="number" value="0" style="width:70px;text-align:right;border:1px solid #ddd;border-radius:4px;padding:2px 4px;font-size:12px" data-gpt="${g.gpt}" data-base-gp="${g.gp}" data-idx="${i}" onchange="recalcScenario()"></td>
+      <td class="num scene-tons" style="background:#f8faff">${fmtTons(g.tons)}</td>
+      <td class="num scene-gp" style="background:#f8faff">${fmtFull(Math.round(g.gp))}</td>
+      <td class="num scene-delta" style="background:#f8faff">—</td>
+    </tr>`).join('')}
+    <tr class="total-row"><td>Итого</td><td class="num">${fmtTons(kpi.tons)}</td><td class="num">100%</td><td class="num">${fmtPct(kpi.margin)}</td><td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td><td class="num">${fmtFull(Math.round(totalGP))}</td>
+    <td class="num" style="background:#f8faff" id="scenTotalDeltaT">0</td><td class="num" style="background:#f8faff" id="scenTotalTons">${fmtTons(kpi.tons)}</td><td class="num" style="background:#f8faff" id="scenTotalGP">${fmtFull(Math.round(totalGP))}</td><td class="num" style="background:#f8faff" id="scenTotalDelta">—</td></tr>
+    </tbody></table></div>
+  </div>
+  <p style="font-size:11px;color:var(--text2);margin-top:4px">Введите изменение тоннажа (±) для каждой группы. Расчётная прибыль = (факт тонны + Δ) × факт прибыль/т. Это модель, не прогноз.</p>`;
+}
+
+window.recalcScenario = function() {
+  const inputs = document.querySelectorAll('#structBody input[type=number]');
+  let totalDeltaT = 0, totalNewGP = 0, totalBaseGP = 0;
+  inputs.forEach(inp => {
+    const row = inp.closest('tr');
+    const delta = parseFloat(inp.value) || 0;
+    const gpt = parseFloat(inp.dataset.gpt) || 0;
+    const baseGP = parseFloat(inp.dataset.baseGp) || 0;
+    const baseTons = baseGP / (gpt || 1);
+    const newTons = baseTons + delta;
+    const newGP = newTons * gpt;
+    const deltaGP = newGP - baseGP;
+    totalDeltaT += delta;
+    totalNewGP += newGP;
+    totalBaseGP += baseGP;
+    row.querySelector('.scene-tons').textContent = fmtTons(newTons);
+    row.querySelector('.scene-gp').textContent = fmtFull(Math.round(newGP));
+    const dEl = row.querySelector('.scene-delta');
+    dEl.textContent = (deltaGP >= 0 ? '+' : '') + fmtFull(Math.round(deltaGP));
+    dEl.className = 'num scene-delta ' + (deltaGP > 0 ? 'pos' : deltaGP < 0 ? 'neg' : '');
+  });
+  document.getElementById('scenTotalDeltaT').textContent = (totalDeltaT >= 0 ? '+' : '') + fmtTons(totalDeltaT);
+  document.getElementById('scenTotalTons').textContent = fmtTons(totalBaseGP / (totalBaseGP / (document.querySelectorAll('#structBody tr.sortable-row').length || 1)) + totalDeltaT); // simplified
+  document.getElementById('scenTotalGP').textContent = fmtFull(Math.round(totalNewGP));
+  const td = document.getElementById('scenTotalDelta');
+  const totalDelta = totalNewGP - totalBaseGP;
+  td.textContent = (totalDelta >= 0 ? '+' : '') + fmtFull(Math.round(totalDelta));
+  td.className = 'num ' + (totalDelta > 0 ? 'pos' : totalDelta < 0 ? 'neg' : '');
+};
+
+function setupSortHandlers(container) {
+  container.querySelectorAll('table').forEach(table => {
+    table.querySelectorAll('th').forEach((th, i) => {
+      th.innerHTML += '<span class="sort-arrow">▾</span>';
+      th.addEventListener('click', () => sortTable(table, i, th.classList.contains('num')));
+    });
+  });
+}
+
+// === LOAD DATA ===
+</script>
+<script src="data.js"></script>
+<script>init(DATA);</script>
+</body>
+</html>
