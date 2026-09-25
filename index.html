@@ -140,7 +140,8 @@ tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--bo
   <div class="topbar">
     <span class="year">2026</span>
     <div class="month-chips" id="monthChips"></div>
-    <div class="warehouse-filter" style="margin-left:auto;display:flex;gap:12px;align-items:center;">
+    <div class="warehouse-filter" style="margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <div id="mgrFilterWrap" style="display:none">Менеджер: <select id="mgrFilter"><option value="">Все менеджеры</option></select></div>
       <div>Группа: <select id="agFilter"><option value="">Все покупатели</option></select></div>
       <div>Склад: <select id="whFilter"><option value="">Все склады</option></select></div>
     </div>
@@ -164,6 +165,7 @@ tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--bo
 let DATA = null;
 let activeMonths = new Set();
 let activePage = 'summary';
+let managerChannelTab = 'all'; // 'all', 'opt', 'retail'
 
 // === FORMATTING ===
 function fmt(n, dec=0) {
@@ -193,6 +195,7 @@ function init(data) {
   buildMonthChips();
   buildWarehouseFilter();
   buildAccessGroupFilter();
+  buildManagerFilter();
   setupNav();
   renderAll();
 }
@@ -229,6 +232,16 @@ function buildAccessGroupFilter() {
   }
 }
 
+function buildManagerFilter() {
+  const sel = document.getElementById('mgrFilter');
+  if (DATA.all_managers_list) {
+    DATA.all_managers_list.forEach(m => { const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
+    sel.addEventListener('change', () => {
+      renderAll();
+    });
+  }
+}
+
 function setupNav() {
   document.querySelectorAll('#nav a').forEach(a => {
     a.addEventListener('click', () => {
@@ -237,6 +250,12 @@ function setupNav() {
       activePage = a.dataset.page;
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.getElementById('page-' + activePage).classList.add('active');
+      
+      const mfWrap = document.getElementById('mgrFilterWrap');
+      if (mfWrap) {
+        mfWrap.style.display = (activePage === 'clients') ? 'block' : 'none';
+      }
+      
       renderAll();
     });
   });
@@ -334,9 +353,9 @@ function renderSummary(kpi) {
       <tbody>${cls.map(c => `<tr class="sortable-row"><td>${c.name}</td><td class="num" data-val="${c.revenue}">${fmt(c.revenue)}</td><td class="num" data-val="${c.gp}">${fmt(c.gp)}</td><td class="num ${marginClass(c.margin)}" data-val="${c.margin}">${fmtPct(c.margin)}</td></tr>`).join('')}
       </tbody></table>
     </div>
-    <div class="tbl-wrap"><div class="tbl-title">Менеджеры (розница)</div>
-      <table><thead><tr><th>Менеджер</th><th class="num">Транзакций</th><th class="num">Оборот</th><th class="num">Маржа</th><th class="num">Приб./т</th></tr></thead>
-      <tbody>${mgrs.map(m => `<tr class="sortable-row"><td>${m.name}</td><td class="num" data-val="${m.transactions}">${m.transactions}</td><td class="num" data-val="${m.revenue}">${fmt(m.revenue)}</td><td class="num ${marginClass(m.margin)}" data-val="${m.margin}">${fmtPct(m.margin)}</td><td class="num" data-val="${m.gp_per_ton}">${fmtFull(Math.round(m.gp_per_ton))}</td></tr>`).join('')}
+    <div class="tbl-wrap"><div class="tbl-title">ТОП менеджеры (опт)</div>
+      <table><thead><tr><th>Менеджер</th><th class="num">Клиентов</th><th class="num">Оборот</th><th class="num">Маржа</th><th class="num">Приб./т</th></tr></thead>
+      <tbody>${(DATA.wholesale_managers||[]).slice(0, 10).map(m => `<tr class="sortable-row"><td><strong>${m.name}</strong></td><td class="num" data-val="${m.clients_count}">${m.clients_count}</td><td class="num" data-val="${m.revenue}">${fmt(m.revenue)}</td><td class="num ${marginClass(m.margin)}" data-val="${m.margin}">${fmtPct(m.margin)}</td><td class="num" data-val="${m.gp_per_ton}">${fmtFull(Math.round(m.gp_per_ton))}</td></tr>`).join('')}
       </tbody></table>
     </div>
   </div>`;
@@ -431,60 +450,148 @@ function renderManagers(kpi) {
   const months = DATA.months.filter(m => activeMonths.has(m));
   const mHeaders = months.map(m => `<th class="num">${DATA.month_names[DATA.months.indexOf(m)]}</th>`).join('');
   
-  const rows = DATA.managers.map(m => {
-    const rev = sumFiltered(m.monthly, 'revenue');
-    const gp = sumFiltered(m.monthly, 'gp');
-    const tons = sumFiltered(m.monthly, 'tons');
-    const margin = rev ? gp/rev*100 : 0;
-    const mCells = months.map(mo => { const d = m.monthly.find(x => x.month === mo); return monthCell(d); }).join('');
-    const tagCls = m.channel === 'Розница' ? 'badge-blue' : (m.channel === 'Смешанный' ? 'badge-green' : 'badge-orange');
-    return `<tr class="sortable-row">
-      <td><strong>${m.name}</strong> <span class="badge ${tagCls}" style="font-size:9px;margin-left:4px">${m.channel}</span></td>
-      <td class="num" data-val="${m.clients_count || 1}">${m.clients_count || 1}</td>
-      <td class="num" data-val="${m.transactions}">${m.transactions}</td>
-      <td class="num" data-val="${rev}"><div class="mcell"><div class="mcell-rev">${fmt(rev)}</div><div class="mcell-sub"><span class="${marginClass(margin)}">${fmtPct(margin)}</span> · ${fmt(gp)}</div><div class="mcell-sub">${fmtTons(tons)} т</div></div></td>
-      <td class="num" data-val="${m.gp_per_ton}">${fmtFull(Math.round(m.gp_per_ton))}</td>
-      <td class="num" data-val="${m.avg_check}">${fmtFull(Math.round(m.avg_check))}</td>
-      ${mCells}</tr>`;
-  }).join('');
+  // Calculate channel totals
+  const optMgrs = DATA.wholesale_managers || [];
+  const retMgrs = DATA.retail_managers || [];
   
-  const optMgrs = DATA.managers.filter(m => m.channel !== 'Розница');
-  const retMgrs = DATA.managers.filter(m => m.channel === 'Розница');
-  const optRev = optMgrs.reduce((s, m) => s + m.revenue, 0);
-  const retRev = retMgrs.reduce((s, m) => s + m.revenue, 0);
+  const optRev = optMgrs.reduce((s, m) => s + sumFiltered(m.monthly, 'revenue'), 0);
+  const optGP = optMgrs.reduce((s, m) => s + sumFiltered(m.monthly, 'gp'), 0);
+  const optTons = optMgrs.reduce((s, m) => s + sumFiltered(m.monthly, 'tons'), 0);
+  const optMargin = optRev ? (optGP / optRev * 100) : 0;
+  
+  const retRev = retMgrs.reduce((s, m) => s + sumFiltered(m.monthly, 'revenue'), 0);
+  const retGP = retMgrs.reduce((s, m) => s + sumFiltered(m.monthly, 'gp'), 0);
+  const retTons = retMgrs.reduce((s, m) => s + sumFiltered(m.monthly, 'tons'), 0);
+  const retMargin = retRev ? (retGP / retRev * 100) : 0;
+  
+  const totalRev = optRev + retRev;
+  const retShareRev = totalRev ? (retRev / totalRev * 100) : 0;
+  const retShareGP = (optGP + retGP) ? (retGP / (optGP + retGP) * 100) : 0;
+
+  function renderTableRows(mgrList, isRetail) {
+    return mgrList.map(m => {
+      const rev = sumFiltered(m.monthly, 'revenue');
+      const gp = sumFiltered(m.monthly, 'gp');
+      const tons = sumFiltered(m.monthly, 'tons');
+      const margin = rev ? gp/rev*100 : 0;
+      const mCells = months.map(mo => { const d = m.monthly.find(x => x.month === mo); return monthCell(d); }).join('');
+      const tagCls = isRetail ? 'badge-blue' : 'badge-green';
+      
+      // Clicking on manager opens Clients view pre-filtered by this manager!
+      const clickAction = !isRetail && m.name !== 'Без менеджера' 
+        ? `onclick="filterClientsByManager('${m.name.replace(/'/g, "\\'")}')" style="cursor:pointer;text-decoration:underline;" title="Нажмите, чтобы увидеть клиентов этого менеджера"`
+        : '';
+        
+      return `<tr class="sortable-row">
+        <td><strong ${clickAction}>${m.name}</strong> <span class="badge ${tagCls}" style="font-size:9px;margin-left:4px">${isRetail ? 'Розница' : 'Опт'}</span></td>
+        <td class="num" data-val="${m.clients_count || 1}">${m.clients_count || 1}</td>
+        <td class="num" data-val="${m.transactions}">${m.transactions}</td>
+        <td class="num" data-val="${rev}"><div class="mcell"><div class="mcell-rev">${fmt(rev)}</div><div class="mcell-sub"><span class="${marginClass(margin)}">${fmtPct(margin)}</span> · ${fmt(gp)}</div><div class="mcell-sub">${fmtTons(tons)} т</div></div></td>
+        <td class="num" data-val="${m.gp_per_ton}">${fmtFull(Math.round(m.gp_per_ton))}</td>
+        <td class="num" data-val="${m.avg_check}">${fmtFull(Math.round(m.avg_check))}</td>
+        ${mCells}</tr>`;
+    }).join('');
+  }
+
+  const optRows = renderTableRows(optMgrs, false);
+  const retRows = renderTableRows(retMgrs, true);
+
+  // Toggle buttons styling
+  const btnAll = `<button onclick="setManagerTab('all')" class="month-chip ${managerChannelTab==='all'?'active':''}" style="font-weight:600">Все разделы</button>`;
+  const btnOpt = `<button onclick="setManagerTab('opt')" class="month-chip ${managerChannelTab==='opt'?'active':''}" style="font-weight:600">🏢 Только Опт (${optMgrs.length})</button>`;
+  const btnRet = `<button onclick="setManagerTab('retail')" class="month-chip ${managerChannelTab==='retail'?'active':''}" style="font-weight:600">🛒 Только Розница (${retMgrs.length})</button>`;
+
+  let tablesHTML = '';
+  if (managerChannelTab === 'all' || managerChannelTab === 'opt') {
+    tablesHTML += `
+    <div class="tbl-wrap" style="margin-bottom:24px;">
+      <div class="tbl-title" style="background:#f8fafc;display:flex;justify-content:space-between;align-items:center;">
+        <div>🏢 <strong>Менеджеры оптовых юридических клиентов</strong> (${optMgrs.length} ответственных)</div>
+        <div style="font-size:12px;color:var(--text2)">Оборот: <strong>${fmt(optRev)} лей</strong> (${fmtPct(optMargin)} маржа) · Тоннаж: <strong>${fmtTons(optTons)} т</strong></div>
+      </div>
+      <div class="tbl-scroll"><table><thead><tr><th>Менеджер (нажмите для перехода к клиентам)</th><th class="num">Клиентов</th><th class="num">Транз.</th><th class="num">ИТОГО</th><th class="num">Приб./т</th><th class="num">Ср. чек</th>${mHeaders}</tr></thead>
+      <tbody>${optRows}</tbody></table></div>
+    </div>`;
+  }
+
+  if (managerChannelTab === 'all' || managerChannelTab === 'retail') {
+    tablesHTML += `
+    <div class="tbl-wrap">
+      <div class="tbl-title" style="background:#f8fafc;display:flex;justify-content:space-between;align-items:center;">
+        <div>🛒 <strong>Розничные продажи менеджеров (частные лица)</strong> (${retMgrs.length} менеджеров)</div>
+        <div style="font-size:12px;color:var(--text2)">Оборот: <strong>${fmt(retRev)} лей</strong> (${fmtPct(retMargin)} маржа) · Тоннаж: <strong>${fmtTons(retTons)} т</strong></div>
+      </div>
+      <div class="tbl-scroll"><table><thead><tr><th>Менеджер (розница)</th><th class="num">Чеков</th><th class="num">Транз.</th><th class="num">ИТОГО</th><th class="num">Приб./т</th><th class="num">Ср. чек</th>${mHeaders}</tr></thead>
+      <tbody>${retRows}</tbody></table></div>
+    </div>`;
+  }
 
   el.innerHTML = `
   <div class="kpi-row">
-    <div class="kpi-card"><div class="kpi-label">👥 Всего менеджеров</div><div class="kpi-value">${DATA.managers.length}</div><div class="kpi-sub">включая розницу</div></div>
-    <div class="kpi-card"><div class="kpi-label">🏢 Оптовые продажи</div><div class="kpi-value">${fmt(optRev)}</div><div class="kpi-sub">${optMgrs.length} ответственных</div></div>
-    <div class="kpi-card"><div class="kpi-label">🛒 Розничные продажи</div><div class="kpi-value">${fmt(retRev)}</div><div class="kpi-sub">${retMgrs.length} менеджеров</div></div>
-    <div class="kpi-card"><div class="kpi-label">📈 Прибыль общая</div><div class="kpi-value">${fmt(kpi.gp)}</div></div>
-    <div class="kpi-card"><div class="kpi-label">% Средняя маржа</div><div class="kpi-value ${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">🏢 Оборот Опта</div><div class="kpi-value">${fmt(optRev)}</div><div class="kpi-sub">${(100-retShareRev).toFixed(1)}% от общего оборота · маржа ${fmtPct(optMargin)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">🛒 Оборот Розницы</div><div class="kpi-value" style="color:var(--accent)">${fmt(retRev)}</div><div class="kpi-sub"><strong>${retShareRev.toFixed(1)}%</strong> от общего оборота · маржа <strong>${fmtPct(retMargin)}</strong></div></div>
+    <div class="kpi-card"><div class="kpi-label">📈 Прибыль Опта</div><div class="kpi-value">${fmt(optGP)}</div><div class="kpi-sub">${(100-retShareGP).toFixed(1)}% прибыли</div></div>
+    <div class="kpi-card"><div class="kpi-label">📈 Прибыль Розницы</div><div class="kpi-value pos">${fmt(retGP)}</div><div class="kpi-sub"><strong>${retShareGP.toFixed(1)}%</strong> прибыли компании</div></div>
+    <div class="kpi-card"><div class="kpi-label">💎 Прибыль/т (Розница vs Опт)</div><div class="kpi-value pos">${fmtFull(Math.round(retTons ? retGP/retTons : 0))}</div><div class="kpi-sub">в опте: ${fmtFull(Math.round(optTons ? optGP/optTons : 0))} лей/т (+${Math.round(((retGP/retTons)/(optGP/optTons)-1)*100)}%)</div></div>
   </div>
-  <div class="tbl-wrap"><div class="tbl-title">Эффективность менеджеров (Опт + Розница)</div>
-    <div class="tbl-scroll"><table><thead><tr><th>Менеджер</th><th class="num">Клиентов</th><th class="num">Транз.</th><th class="num">ИТОГО</th><th class="num">Приб./т</th><th class="num">Ср. чек</th>${mHeaders}</tr></thead>
-    <tbody>${rows}</tbody></table></div>
-  </div>`;
+  
+  <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+    <span style="font-weight:600;font-size:12px;color:var(--text2)">Переключение каналов:</span>
+    ${btnAll} ${btnOpt} ${btnRet}
+  </div>
+
+  ${tablesHTML}`;
   setupSortHandlers(el);
 }
+
+window.setManagerTab = function(tab) {
+  managerChannelTab = tab;
+  renderManagers(recalcKPI());
+};
+
+window.filterClientsByManager = function(mgrName) {
+  // 1. Switch to clients tab
+  document.querySelectorAll('#nav a').forEach(x => x.classList.remove('active'));
+  const clLink = document.querySelector('#nav a[data-page="clients"]');
+  if (clLink) clLink.classList.add('active');
+  activePage = 'clients';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-clients').classList.add('active');
+  
+  // 2. Show mgr filter in topbar and select this manager
+  const mfWrap = document.getElementById('mgrFilterWrap');
+  if (mfWrap) mfWrap.style.display = 'block';
+  const sel = document.getElementById('mgrFilter');
+  if (sel) sel.value = mgrName;
+  
+  // 3. Render clients
+  renderClients(recalcKPI());
+};
 
 // === CLIENTS ===
 function renderClients(kpi) {
   const el = document.getElementById('page-clients');
   const selectedAG = document.getElementById('agFilter')?.value || '';
+  const selectedMgr = document.getElementById('mgrFilter')?.value || '';
   
   let filteredClients = DATA.clients;
   if (selectedAG) {
     filteredClients = filteredClients.filter(c => c.access_group === selectedAG);
+  }
+  if (selectedMgr) {
+    filteredClients = filteredClients.filter(c => c.manager === selectedMgr);
   }
   
   const opt = filteredClients.filter(c => c.type === 'Опт').sort((a,b) => b.revenue - a.revenue);
   const ret = filteredClients.filter(c => c.type === 'Розница').sort((a,b) => b.revenue - a.revenue);
   
   function clientRows(list) {
+    if (list.length === 0) {
+      return `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text2)">Клиентов не найдено по выбранным фильтрам</td></tr>`;
+    }
     return list.map(c => `<tr class="sortable-row">
-      <td><strong>${c.name}</strong>${c.manager ? ` <span class="badge badge-blue" style="margin-left:4px">${c.manager}</span>` : ''}</td>
-      <td><span class="badge badge-green">${c.access_group || 'Покупатели металла'}</span></td>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.manager ? `<span class="badge badge-blue">${c.manager}</span>` : '<span style="color:#94a3b8">Без менеджера</span>'}</td>
       <td class="num" data-val="${c.transactions}">${c.transactions}</td>
       <td class="num" data-val="${c.revenue}">${fmtFull(Math.round(c.revenue))}</td>
       <td class="num" data-val="${c.tons}">${fmtTons(c.tons)}</td>
@@ -502,21 +609,36 @@ function renderClients(kpi) {
   const top20gp = allOpt.slice(0,20).reduce((s,c) => s+c.gp, 0);
   const top50gp = allOpt.slice(0,50).reduce((s,c) => s+c.gp, 0);
   
+  const filterDesc = [
+    selectedMgr ? `Менеджер: <strong>${selectedMgr}</strong>` : null,
+    selectedAG ? `Группа: <strong>${selectedAG}</strong>` : null
+  ].filter(Boolean).join(' · ');
+
   el.innerHTML = renderKPICards(kpi) + `
+  ${filterDesc ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+    <div>🔍 Активный фильтр: ${filterDesc} (Найдено оптовых клиентов: <strong>${opt.length}</strong>)</div>
+    <button onclick="document.getElementById('mgrFilter').value='';document.getElementById('agFilter').value='';renderClients(recalcKPI());" style="padding:4px 8px;border:1px solid #cbd5e1;background:#fff;border-radius:4px;cursor:pointer;font-size:11px">Сбросить фильтры</button>
+  </div>` : ''}
+
   <div class="kpi-row">
-    <div class="kpi-card"><div class="kpi-label">ТОП-10</div><div class="kpi-value">${totalOptGP ? (top10gp/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли</div></div>
-    <div class="kpi-card"><div class="kpi-label">ТОП-20</div><div class="kpi-value">${totalOptGP ? (top20gp/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли</div></div>
-    <div class="kpi-card"><div class="kpi-label">ТОП-50</div><div class="kpi-value">${totalOptGP ? (top50gp/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли</div></div>
-    <div class="kpi-card"><div class="kpi-label">Остальные клиенты</div><div class="kpi-value">${totalOptGP ? ((totalOptGP-top50gp)/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли</div></div>
+    <div class="kpi-card"><div class="kpi-label">ТОП-10 клиентов</div><div class="kpi-value">${totalOptGP ? (top10gp/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли выборки</div></div>
+    <div class="kpi-card"><div class="kpi-label">ТОП-20 клиентов</div><div class="kpi-value">${totalOptGP ? (top20gp/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли выборки</div></div>
+    <div class="kpi-card"><div class="kpi-label">ТОП-50 клиентов</div><div class="kpi-value">${totalOptGP ? (top50gp/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли выборки</div></div>
+    <div class="kpi-card"><div class="kpi-label">Остальные клиенты</div><div class="kpi-value">${totalOptGP ? ((totalOptGP-top50gp)/totalOptGP*100).toFixed(1) : 0}%</div><div class="kpi-sub">прибыли выборки</div></div>
   </div>
-  <div class="tbl-wrap"><div class="tbl-title">Оптовые клиенты с закреплённым менеджером (ТОП-250)</div>
-    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th>Группа доступа</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th><th class="num">Посл. продажа</th></tr></thead>
+
+  <div class="tbl-wrap" style="margin-bottom:24px;">
+    <div class="tbl-title">🏢 Оптовые клиенты (${opt.length} контрагентов)</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th>Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th><th class="num">Посл. продажа</th></tr></thead>
     <tbody>${clientRows(opt)}</tbody></table></div>
   </div>
-  <div class="tbl-wrap"><div class="tbl-title">Розничные клиенты (менеджеры)</div>
-    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th>Группа доступа</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th><th class="num">Посл. продажа</th></tr></thead>
+
+  ${!selectedMgr ? `
+  <div class="tbl-wrap">
+    <div class="tbl-title">🛒 Розничные продажи (${ret.length} менеджеров)</div>
+    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th>Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th><th class="num">Посл. продажа</th></tr></thead>
     <tbody>${clientRows(ret)}</tbody></table></div>
-  </div>`;
+  </div>` : ''}`;
   setupSortHandlers(el);
 }
 
