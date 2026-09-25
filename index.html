@@ -670,6 +670,7 @@ async function doLogin() {
     dw.style.display = 'flex';
     init(data);
   } catch (e) {
+    console.error('Login/decryption error:', e);
     btn.textContent = 'Войти';
     btn.disabled = false;
     errEl.textContent = 'Неверный пароль';
