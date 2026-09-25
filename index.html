@@ -59,20 +59,22 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .tbl-wrap{background:var(--white);border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
 .tbl-title{padding:12px 16px;font-weight:600;font-size:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .tbl-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:1}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+th{background:#f8fafc;padding:6px 8px;text-align:left;font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:1}
 th:hover{color:var(--text)}
-th.num,td.num{text-align:right}
+th.num,td.num{text-align:right;white-space:nowrap;width:1%;min-width:65px}
 th .sort-arrow{font-size:9px;margin-left:3px;opacity:.4}
 th.sorted .sort-arrow{opacity:1;color:var(--accent)}
-td{padding:7px 10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+td{padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+td:first-child, th:first-child{max-width:280px;min-width:140px;overflow:hidden;text-overflow:ellipsis}
+td.mgr-col, th.mgr-col{width:180px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 tr:hover td{background:#f0f4ff}
 tr.group-row{cursor:pointer}
 tr.group-row td{font-weight:600;background:#f8fafc}
 tr.group-row:hover td{background:#eef2ff}
-tr.group-row td:first-child{padding-left:12px}
+tr.group-row td:first-child{padding-left:10px}
 tr.item-row td{font-weight:400;color:#475569}
-tr.item-row td:first-child{padding-left:32px}
+tr.item-row td:first-child{padding-left:26px}
 tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--border)}
 .expand-icon{display:inline-block;width:16px;font-size:10px;color:var(--text2);transition:.15s}
 .expanded .expand-icon{transform:rotate(90deg)}
@@ -816,7 +818,7 @@ function renderClients(kpi, records) {
       const gpt = c.tons ? (gp / c.tons) : 0;
       return `<tr class="sortable-row">
         <td><strong>${c.name}</strong></td>
-        <td>${c.manager && c.manager !== 'Без менеджера' ? `<span class="badge badge-blue">${c.manager}</span>` : '<span style="color:#94a3b8">Без менеджера</span>'}</td>
+        <td class="mgr-col">${c.manager && c.manager !== 'Без менеджера' ? `<span class="badge badge-blue">${c.manager}</span>` : '<span style="color:#94a3b8">Без менеджера</span>'}</td>
         <td class="num" data-val="${c.tx}">${c.tx}</td>
         <td class="num" data-val="${c.rev}">${fmtFull(Math.round(c.rev))}</td>
         <td class="num" data-val="${c.tons}">${fmtTons(c.tons)}</td>
@@ -855,14 +857,14 @@ function renderClients(kpi, records) {
 
   <div class="tbl-wrap" style="margin-bottom:24px;">
     <div class="tbl-title">🏢 Оптовые клиенты (${opt.length} контрагентов)</div>
-    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th>Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th></tr></thead>
+    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th class="mgr-col">Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th></tr></thead>
     <tbody>${clientRows(opt)}</tbody></table></div>
   </div>
 
   ${!activeManager ? `
   <div class="tbl-wrap">
     <div class="tbl-title">🛒 Розничные продажи (${ret.length} менеджеров)</div>
-    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th>Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th></tr></thead>
+    <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th class="mgr-col">Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th></tr></thead>
     <tbody>${clientRows(ret)}</tbody></table></div>
   </div>` : ''}`;
   setupSortHandlers(el);
