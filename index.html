@@ -57,33 +57,36 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 .kpi-card .kpi-sub{font-size:11px;color:var(--text2);margin-top:2px}
 /* Tables */
 .tbl-wrap{background:var(--white);border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
-.tbl-title{padding:12px 16px;font-weight:600;font-size:14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.tbl-title{padding:10px 14px;font-weight:600;font-size:13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .tbl-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
-th{background:#f8fafc;padding:6px 8px;text-align:left;font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:1}
+table{width:auto;min-width:100%;border-collapse:collapse;font-size:11.5px;table-layout:auto}
+th{background:#f8fafc;padding:5px 8px;text-align:left;font-weight:600;color:var(--text2);font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none;position:sticky;top:0;z-index:1}
 th:hover{color:var(--text)}
-th.num,td.num{text-align:right;white-space:nowrap;width:1%;min-width:65px}
-th .sort-arrow{font-size:9px;margin-left:3px;opacity:.4}
+th.num,td.num{text-align:right;white-space:nowrap;padding:5px 8px;font-size:11.5px}
+th .sort-arrow{font-size:9px;margin-left:3px;opacity:.3}
 th.sorted .sort-arrow{opacity:1;color:var(--accent)}
 td{padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
-td:first-child, th:first-child{max-width:280px;min-width:140px;overflow:hidden;text-overflow:ellipsis}
-td.mgr-col, th.mgr-col{width:180px;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td:first-child, th:first-child{max-width:270px;min-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.mgr-col, th.mgr-col{width:160px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 tr:hover td{background:#f0f4ff}
-tr.group-row{cursor:pointer}
-tr.group-row td{font-weight:600;background:#f8fafc}
+tr.group-row{cursor:pointer;background:#f8fafc;user-select:none}
+tr.group-row td{font-weight:600;color:var(--text);border-top:1px solid #e2e8f0}
 tr.group-row:hover td{background:#eef2ff}
 tr.group-row td:first-child{padding-left:10px}
-tr.item-row td{font-weight:400;color:#475569}
-tr.item-row td:first-child{padding-left:26px}
-tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--border)}
-.expand-icon{display:inline-block;width:16px;font-size:10px;color:var(--text2);transition:.15s}
+tr.item-row td{font-weight:400;color:#475569;background:#fff}
+tr.item-row td:first-child{padding-left:24px}
+tr.item-row:hover td{background:#f1f5f9}
+tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--border);color:var(--text)}
+.expand-icon{display:inline-block;width:12px;font-size:9px;color:var(--text2);transition:transform .15s ease}
 .expanded .expand-icon{transform:rotate(90deg)}
 /* Cell colors */
 .pos{color:var(--green)}.neg{color:var(--red)}.warn{color:var(--orange)}
 /* Compact month cell */
-.mcell{line-height:1.4}
-.mcell .mcell-rev{font-weight:600;font-size:12px}
-.mcell .mcell-sub{font-size:10px;color:var(--text2)}
+.mcell{line-height:1.25;display:inline-block;min-width:74px;text-align:right}
+.mcell .mcell-rev{font-weight:600;font-size:11.5px}
+.mcell .mcell-sub{font-size:9.5px;color:var(--text2);white-space:nowrap}
+.btn-sub{padding:3px 8px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--white);border-radius:4px;cursor:pointer;color:var(--text2);transition:.15s}
+.btn-sub:hover{background:#f1f5f9;color:var(--text);border-color:#cbd5e1}
 /* Channel cards */
 .channel-cards{display:flex;gap:12px;margin-bottom:16px}
 .channel-card{flex:1;background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px}
@@ -142,10 +145,11 @@ tr.total-row td{font-weight:700;background:#f1f5f9;border-top:2px solid var(--bo
   <div class="topbar">
     <span class="year">2026</span>
     <div class="month-chips" id="monthChips"></div>
-    <div class="warehouse-filter" style="margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div class="warehouse-filter" style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <div id="mgrFilterWrap" style="display:none">Менеджер: <select id="mgrFilter"><option value="">Все менеджеры</option></select></div>
-      <div>Группа: <select id="agFilter"><option value="">Все покупатели</option></select></div>
+      <div>Группа: <select id="agFilter"><option value="">Все группы</option></select></div>
       <div>Склад: <select id="whFilter"><option value="">Все склады</option></select></div>
+      <button id="btnResetFilters" onclick="resetAllFilters()" style="display:none;padding:4px 8px;font-size:11px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:4px;cursor:pointer;font-weight:600">Сбросить</button>
     </div>
   </div>
   <div class="content" id="content">
@@ -204,8 +208,8 @@ function fmtTons(n) { return n == null || isNaN(n) ? '—' : n.toFixed(2).replac
 function marginClass(m) { return m < 5 ? 'neg' : m < 10 ? 'warn' : m >= 15 ? 'pos' : ''; }
 
 function monthCell(d) {
-  if (!d || d.revenue === 0) return '<td class="num mcell"><span style="color:#ccc">—</span></td>';
-  return `<td class="num mcell"><div class="mcell-rev">${fmt(d.revenue)}</div><div class="mcell-sub"><span class="${marginClass(d.margin)}">${fmtPct(d.margin)}</span> · ${fmt(d.gp)}</div></td>`;
+  if (!d || d.revenue === 0) return '<td class="num mcell" data-val="0"><span style="color:#cbd5e1">—</span></td>';
+  return `<td class="num mcell" data-val="${d.revenue}"><div class="mcell-rev">${fmt(d.revenue)}</div><div class="mcell-sub"><span class="${marginClass(d.margin)}">${fmtPct(d.margin)}</span> · ${fmt(d.gp)}</div></td>`;
 }
 
 // === INIT ===
@@ -217,8 +221,48 @@ function init(cubeData) {
   buildAccessGroupFilter();
   buildManagerFilter();
   setupNav();
+  updateFilterStyles();
   renderAll();
 }
+
+function updateFilterStyles() {
+  const wf = document.getElementById('whFilter');
+  if (wf) {
+    wf.style.borderColor = activeWarehouse ? 'var(--accent)' : '';
+    wf.style.background = activeWarehouse ? '#eff6ff' : '';
+    wf.style.fontWeight = activeWarehouse ? '600' : '';
+  }
+  const af = document.getElementById('agFilter');
+  if (af) {
+    af.style.borderColor = activeAccessGroup ? 'var(--accent)' : '';
+    af.style.background = activeAccessGroup ? '#eff6ff' : '';
+    af.style.fontWeight = activeAccessGroup ? '600' : '';
+  }
+  const mf = document.getElementById('mgrFilter');
+  if (mf) {
+    mf.style.borderColor = activeManager ? 'var(--accent)' : '';
+    mf.style.background = activeManager ? '#eff6ff' : '';
+    mf.style.fontWeight = activeManager ? '600' : '';
+  }
+  const rst = document.getElementById('btnResetFilters');
+  if (rst) {
+    const isFiltered = Boolean(activeWarehouse || activeAccessGroup || activeManager || (CUBE && activeMonths.size < CUBE.months.length));
+    rst.style.display = isFiltered ? 'inline-block' : 'none';
+  }
+}
+
+window.resetAllFilters = function() {
+  activeWarehouse = '';
+  activeAccessGroup = '';
+  activeManager = '';
+  if (CUBE) activeMonths = new Set(CUBE.months);
+  document.querySelectorAll('#monthChips .month-chip').forEach(c => c.classList.add('active'));
+  const wf = document.getElementById('whFilter'); if (wf) wf.value = '';
+  const af = document.getElementById('agFilter'); if (af) af.value = '';
+  const mf = document.getElementById('mgrFilter'); if (mf) mf.value = '';
+  updateFilterStyles();
+  renderAll();
+};
 
 function buildMonthChips() {
   const el = document.getElementById('monthChips');
@@ -230,6 +274,7 @@ function buildMonthChips() {
       const m = parseInt(chip.dataset.month);
       if (activeMonths.has(m)) { activeMonths.delete(m); chip.classList.remove('active'); }
       else { activeMonths.add(m); chip.classList.add('active'); }
+      updateFilterStyles();
       renderAll();
     });
   });
@@ -247,6 +292,7 @@ function buildWarehouseFilter() {
     });
     sel.addEventListener('change', () => {
       activeWarehouse = sel.value;
+      updateFilterStyles();
       renderAll();
     });
   }
@@ -254,7 +300,7 @@ function buildWarehouseFilter() {
 
 function buildAccessGroupFilter() {
   const sel = document.getElementById('agFilter');
-  sel.innerHTML = '<option value="">Все покупатели</option>';
+  sel.innerHTML = '<option value="">Все группы</option>';
   if (CUBE.access_groups) {
     CUBE.access_groups.forEach(ag => {
       const o = document.createElement('option');
@@ -264,6 +310,7 @@ function buildAccessGroupFilter() {
     });
     sel.addEventListener('change', () => {
       activeAccessGroup = sel.value;
+      updateFilterStyles();
       renderAll();
     });
   }
@@ -282,6 +329,7 @@ function buildManagerFilter() {
     });
     sel.addEventListener('change', () => {
       activeManager = sel.value;
+      updateFilterStyles();
       renderAll();
     });
   }
@@ -348,21 +396,72 @@ function recalcKPI(records) {
 function sortTable(table, col, numeric=true) {
   const tbody = table.querySelector('tbody');
   if (!tbody) return;
-  const rows = Array.from(tbody.querySelectorAll('tr.sortable-row'));
-  const th = table.querySelectorAll('th')[col];
-  const asc = th.classList.contains('sorted-asc');
-  table.querySelectorAll('th').forEach(h => { h.classList.remove('sorted','sorted-asc','sorted-desc'); });
-  th.classList.add('sorted', asc ? 'sorted-desc' : 'sorted-asc');
-  rows.sort((a, b) => {
-    let va = a.cells[col]?.getAttribute('data-val') || a.cells[col]?.textContent || '';
-    let vb = b.cells[col]?.getAttribute('data-val') || b.cells[col]?.textContent || '';
-    if (numeric) {
-      va = parseFloat(va.replace(/[^\d,.\-]/g,'').replace(',','.')) || 0;
-      vb = parseFloat(vb.replace(/[^\d,.\-]/g,'').replace(',','.')) || 0;
-    }
-    return asc ? va - vb : vb - va;
+  const th = table.querySelectorAll('thead th')[col];
+  if (!th) return;
+
+  const isCurrentlyAsc = th.classList.contains('sorted-asc');
+  const isCurrentlyDesc = th.classList.contains('sorted-desc');
+  let asc;
+  if (!isCurrentlyAsc && !isCurrentlyDesc) {
+    asc = numeric ? false : true; // First click: desc for numbers, asc for text
+  } else {
+    asc = isCurrentlyDesc; // Toggle direction
+  }
+
+  table.querySelectorAll('thead th').forEach(h => {
+    h.classList.remove('sorted','sorted-asc','sorted-desc');
+    const arr = h.querySelector('.sort-arrow');
+    if (arr) { arr.textContent = '▾'; arr.style.opacity = '0.3'; }
   });
-  rows.forEach(r => tbody.appendChild(r));
+  th.classList.add('sorted', asc ? 'sorted-asc' : 'sorted-desc');
+  const thisArr = th.querySelector('.sort-arrow');
+  if (thisArr) {
+    thisArr.textContent = asc ? '▲' : '▼';
+    thisArr.style.opacity = '1';
+  }
+
+  const getVal = (row) => {
+    let v = row.cells[col]?.getAttribute('data-val');
+    if (v === null || v === undefined) v = row.cells[col]?.textContent || '';
+    if (numeric) {
+      return parseFloat(String(v).replace(/[^\d,.\-]/g,'').replace(',','.')) || 0;
+    }
+    return String(v).replace(/[▸▾]/g, '').trim().toLowerCase();
+  };
+
+  const compare = (va, vb) => {
+    if (numeric) return asc ? va - vb : vb - va;
+    return asc ? String(va).localeCompare(String(vb), 'ru') : String(vb).localeCompare(String(va), 'ru');
+  };
+
+  const groupRows = Array.from(tbody.querySelectorAll('tr.group-row'));
+  if (groupRows.length > 0) {
+    // Hierarchical sort for tree tables (e.g. Products)
+    const groups = groupRows.map(gRow => {
+      const gid = gRow.getAttribute('data-group');
+      const itemRows = Array.from(tbody.querySelectorAll(`tr.item-row[data-parent="${gid}"]`));
+      return { gRow, itemRows, val: getVal(gRow) };
+    });
+
+    // Sort groups
+    groups.sort((a, b) => compare(a.val, b.val));
+
+    // Sort items within each group
+    groups.forEach(g => {
+      g.itemRows.sort((a, b) => compare(getVal(a), getVal(b)));
+    });
+
+    // Append back in sorted order
+    groups.forEach(g => {
+      tbody.appendChild(g.gRow);
+      g.itemRows.forEach(ir => tbody.appendChild(ir));
+    });
+  } else {
+    // Flat sort for standard tables
+    const rows = Array.from(tbody.querySelectorAll('tr.sortable-row'));
+    rows.sort((a, b) => compare(getVal(a), getVal(b)));
+    rows.forEach(r => tbody.appendChild(r));
+  }
 }
 
 // === RENDER DISPATCHER ===
@@ -529,16 +628,19 @@ function renderProducts(kpi, records) {
   }
 
   let rows = '';
-  Object.entries(grpMap).forEach(([gi, g]) => {
-    if (g.rev === 0) return;
+  const sortedGroups = Object.entries(grpMap)
+    .filter(([_, g]) => g.rev > 0)
+    .sort((a, b) => b[1].rev - a[1].rev);
+
+  sortedGroups.forEach(([gi, g]) => {
     const margin = g.rev ? (g.gp / g.rev * 100) : 0;
     const mCells = months.map(m => {
       const d = g.monthly[m];
       return monthCell(d ? { revenue: d.rev, gp: d.gp, margin: d.rev ? d.gp/d.rev*100 : 0 } : null);
     }).join('');
 
-    rows += `<tr class="group-row sortable-row" data-group="${gi}" onclick="toggleGroup(this, ${gi})">
-      <td><span class="expand-icon">▸</span> ${g.name}</td>
+    rows += `<tr class="group-row" data-group="${gi}" onclick="toggleGroup(this, '${gi}')">
+      <td title="${g.name}"><span class="expand-icon">▸</span> <strong>${g.name}</strong> <span style="font-size:10px;color:var(--text2);font-weight:400">(${Object.keys(g.items).length})</span></td>
       <td class="num" data-val="${g.rev}"><div class="mcell"><div class="mcell-rev">${fmt(g.rev)}</div><div class="mcell-sub"><span class="${marginClass(margin)}">${fmtPct(margin)}</span> · ${fmt(g.gp)}</div><div class="mcell-sub">${fmtTons(g.tons)} т</div></div></td>
       ${mCells}</tr>`;
 
@@ -550,8 +652,8 @@ function renderProducts(kpi, records) {
         return monthCell(d ? { revenue: d.rev, gp: d.gp, margin: d.rev ? d.gp/d.rev*100 : 0 } : null);
       }).join('');
       rows += `<tr class="item-row hidden" data-parent="${gi}">
-        <td>${item.name}</td>
-        <td class="num" data-val="${item.rev}"><div class="mcell"><div class="mcell-rev">${fmt(item.rev)}</div><div class="mcell-sub"><span class="${marginClass(imargin)}">${fmtPct(imargin)}</span> · ${fmt(item.gp)}</div></div></td>
+        <td title="${item.name}">${item.name}</td>
+        <td class="num" data-val="${item.rev}"><div class="mcell"><div class="mcell-rev">${fmt(item.rev)}</div><div class="mcell-sub"><span class="${marginClass(imargin)}">${fmtPct(imargin)}</span> · ${fmt(item.gp)}</div><div class="mcell-sub">${fmtTons(item.tons)} т</div></div></td>
         ${imCells}</tr>`;
     });
   });
@@ -570,13 +672,41 @@ function renderProducts(kpi, records) {
     return monthCell(d ? { revenue: d.rev, gp: d.gp, margin: d.rev ? d.gp/d.rev*100 : 0 } : null);
   }).join('');
 
-  rows += `<tr class="total-row"><td>Итого</td>
+  const totalRowHTML = `<tr class="total-row"><td>Итого (${sortedGroups.length} групп)</td>
     <td class="num"><div class="mcell"><div class="mcell-rev">${fmt(kpi.revenue)}</div><div class="mcell-sub"><span class="${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</span> · ${fmt(kpi.gp)}</div><div class="mcell-sub">${fmtTons(kpi.tons)} т</div></div></td>
     ${tMCells}</tr>`;
 
   el.innerHTML = renderKPICards(kpi) + `
-  <div class="tbl-wrap"><div class="tbl-title">Продажи по номенклатуре</div>
-    <div class="tbl-scroll"><table><thead><tr><th>Номенклатура</th><th class="num">ИТОГО</th>${monthHeaders}</tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="tbl-wrap">
+    <div class="tbl-title" style="flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span>Продажи по номенклатуре</span>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-sub" onclick="toggleAllGroups(true)" title="Развернуть все категории">Развернуть все</button>
+          <button class="btn-sub" onclick="toggleAllGroups(false)" title="Свернуть все категории">Свернуть все</button>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+        <input type="text" id="prodSearch" placeholder="🔍 Найти товар / группу…" oninput="filterProducts(this.value)" class="filter-input" style="padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;width:200px;">
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Номенклатура</th>
+            <th class="num">ИТОГО</th>
+            ${monthHeaders}
+          </tr>
+        </thead>
+        <tbody id="prodTbody">
+          ${rows}
+        </tbody>
+        <tfoot>
+          ${totalRowHTML}
+        </tfoot>
+      </table>
+    </div>
   </div>`;
   setupSortHandlers(el);
 }
@@ -584,7 +714,75 @@ function renderProducts(kpi, records) {
 function toggleGroup(tr, gi) {
   tr.classList.toggle('expanded');
   const table = tr.closest('table');
-  table.querySelectorAll(`tr[data-parent="${gi}"]`).forEach(r => r.classList.toggle('hidden'));
+  table.querySelectorAll(`tr[data-parent="${gi}"]`).forEach(r => {
+    r.classList.toggle('hidden');
+    r.style.display = r.classList.contains('hidden') ? 'none' : '';
+  });
+}
+
+function toggleAllGroups(expand) {
+  const table = document.querySelector('#page-products table');
+  if (!table) return;
+  table.querySelectorAll('tr.group-row').forEach(tr => {
+    if (expand) tr.classList.add('expanded');
+    else tr.classList.remove('expanded');
+  });
+  table.querySelectorAll('tr.item-row').forEach(r => {
+    if (expand) {
+      r.classList.remove('hidden');
+      r.style.display = '';
+    } else {
+      r.classList.add('hidden');
+      r.style.display = 'none';
+    }
+  });
+}
+
+function filterProducts(query) {
+  const q = query.trim().toLowerCase();
+  const table = document.querySelector('#page-products table');
+  if (!table) return;
+  const groups = table.querySelectorAll('tr.group-row');
+  
+  if (!q) {
+    groups.forEach(g => {
+      g.style.display = '';
+      g.classList.remove('expanded');
+      const gid = g.getAttribute('data-group');
+      table.querySelectorAll(`tr.item-row[data-parent="${gid}"]`).forEach(ir => {
+        ir.classList.add('hidden');
+        ir.style.display = 'none';
+      });
+    });
+    return;
+  }
+  
+  groups.forEach(g => {
+    const gid = g.getAttribute('data-group');
+    const gName = (g.cells[0]?.textContent || '').toLowerCase();
+    const itemRows = table.querySelectorAll(`tr.item-row[data-parent="${gid}"]`);
+    
+    let groupMatches = gName.includes(q);
+    let matchedChildCount = 0;
+    
+    itemRows.forEach(ir => {
+      const itName = (ir.cells[0]?.textContent || '').toLowerCase();
+      if (itName.includes(q) || groupMatches) {
+        ir.classList.remove('hidden');
+        ir.style.display = '';
+        matchedChildCount++;
+      } else {
+        ir.style.display = 'none';
+      }
+    });
+    
+    if (groupMatches || matchedChildCount > 0) {
+      g.style.display = '';
+      g.classList.add('expanded');
+    } else {
+      g.style.display = 'none';
+    }
+  });
 }
 
 // === 3. MONTHS ===
@@ -629,8 +827,20 @@ function renderMonths(kpi, records) {
 
   el.innerHTML = renderKPICards(kpi) + `
   <div class="tbl-wrap"><div class="tbl-title">Результат по месяцам</div>
-    <table id="tblMonths"><thead><tr><th>Месяц</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа %</th><th class="num">Вал. прибыль</th><th class="num">Прибыль/т</th><th class="num">Δ прибыли</th></tr></thead>
-    <tbody>${rows}</tbody></table>
+    <div class="tbl-scroll"><table id="tblMonths"><thead><tr><th>Месяц</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа %</th><th class="num">Вал. прибыль</th><th class="num">Прибыль/т</th><th class="num">Δ прибыли</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr class="total-row">
+        <td>Итого за период</td>
+        <td class="num">${fmtFull(Math.round(kpi.revenue))}</td>
+        <td class="num">${fmtTons(kpi.tons)}</td>
+        <td class="num ${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</td>
+        <td class="num">${fmtFull(Math.round(kpi.gp))}</td>
+        <td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td>
+        <td class="num">—</td>
+      </tr>
+    </tfoot>
+    </table></div>
   </div>`;
   setupSortHandlers(el);
 }
@@ -845,7 +1055,7 @@ function renderClients(kpi, records) {
   el.innerHTML = renderKPICards(kpi) + `
   ${filterDesc ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
     <div>🔍 Активный фильтр: ${filterDesc} (Найдено оптовых клиентов: <strong>${opt.length}</strong>)</div>
-    <button onclick="document.getElementById('mgrFilter').value='';document.getElementById('agFilter').value='';document.getElementById('whFilter').value='';activeManager='';activeAccessGroup='';activeWarehouse='';renderAll();" style="padding:4px 8px;border:1px solid #cbd5e1;background:#fff;border-radius:4px;cursor:pointer;font-size:11px">Сбросить фильтры</button>
+    <button onclick="resetAllFilters()" style="padding:4px 8px;border:1px solid #cbd5e1;background:#fff;border-radius:4px;cursor:pointer;font-size:11px">Сбросить фильтры</button>
   </div>` : ''}
 
   <div class="kpi-row">
@@ -856,7 +1066,12 @@ function renderClients(kpi, records) {
   </div>
 
   <div class="tbl-wrap" style="margin-bottom:24px;">
-    <div class="tbl-title">🏢 Оптовые клиенты (${opt.length} контрагентов)</div>
+    <div class="tbl-title" style="flex-wrap:wrap;gap:8px;">
+      <div>🏢 Оптовые клиенты (${opt.length} контрагентов)</div>
+      <div style="margin-left:auto;">
+        <input type="text" id="clientSearch" placeholder="🔍 Поиск клиента…" oninput="filterClients(this.value)" class="filter-input" style="padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;width:200px;">
+      </div>
+    </div>
     <div class="tbl-scroll"><table><thead><tr><th>Клиент</th><th class="mgr-col">Ответственный менеджер</th><th class="num">Транз.</th><th class="num">Оборот</th><th class="num">Тонны</th><th class="num">Маржа</th><th class="num">Прибыль</th><th class="num">Приб./т</th></tr></thead>
     <tbody>${clientRows(opt)}</tbody></table></div>
   </div>
@@ -868,6 +1083,20 @@ function renderClients(kpi, records) {
     <tbody>${clientRows(ret)}</tbody></table></div>
   </div>` : ''}`;
   setupSortHandlers(el);
+}
+
+function filterClients(query) {
+  const q = query.trim().toLowerCase();
+  const rows = document.querySelectorAll('#page-clients tbody tr.sortable-row');
+  rows.forEach(r => {
+    const name = (r.cells[0]?.textContent || '').toLowerCase();
+    const mgr = (r.cells[1]?.textContent || '').toLowerCase();
+    if (!q || name.includes(q) || mgr.includes(q)) {
+      r.style.display = '';
+    } else {
+      r.style.display = 'none';
+    }
+  });
 }
 
 // === 6. GROUPS ===
@@ -920,9 +1149,9 @@ function renderGroups(kpi, records) {
   el.innerHTML = renderKPICards(kpi) + `
   <div class="tbl-wrap"><div class="tbl-title">Экономика ассортимента</div>
     <div class="tbl-scroll"><table><thead><tr><th>Группа</th><th class="num">Тонны</th><th class="num">% тонн</th><th class="num">Оборот</th><th class="num">% оборот</th><th class="num">Маржа</th><th class="num">Вал. прибыль</th><th class="num">% прибыли</th><th class="num">Приб./т</th><th class="num">Коэфф.</th></tr></thead>
-    <tbody>${rows}
-    <tr class="total-row"><td>Итого</td><td class="num">${fmtTons(kpi.tons)}</td><td class="num">100%</td><td class="num">${fmtFull(Math.round(kpi.revenue))}</td><td class="num">100%</td><td class="num ${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</td><td class="num">${fmtFull(Math.round(kpi.gp))}</td><td class="num">100%</td><td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td><td class="num">1,00</td></tr>
-    </tbody></table></div>
+    <tbody>${rows}</tbody>
+    <tfoot><tr class="total-row"><td>Итого</td><td class="num">${fmtTons(kpi.tons)}</td><td class="num">100%</td><td class="num">${fmtFull(Math.round(kpi.revenue))}</td><td class="num">100%</td><td class="num ${marginClass(kpi.margin)}">${fmtPct(kpi.margin)}</td><td class="num">${fmtFull(Math.round(kpi.gp))}</td><td class="num">100%</td><td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td><td class="num">1,00</td></tr></tfoot>
+    </table></div>
   </div>
   <p style="font-size:11px;color:var(--text2);margin-top:4px">Коэфф. = доля прибыли ÷ доля тоннажа. Зелёный &gt; 1,1 (группа даёт прибыли больше, чем занимает тоннажа). Красный &lt; 0,9 (наоборот).</p>`;
   setupSortHandlers(el);
@@ -977,9 +1206,10 @@ function renderStructure(kpi, records) {
       <td class="num scene-gp" style="background:#f8faff">${fmtFull(Math.round(g.gp))}</td>
       <td class="num scene-delta" style="background:#f8faff">—</td>
     </tr>`).join('')}
-    <tr class="total-row"><td>Итого</td><td class="num">${fmtTons(kpi.tons)}</td><td class="num">100%</td><td class="num">${fmtPct(kpi.margin)}</td><td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td><td class="num">${fmtFull(Math.round(totalGP))}</td>
-    <td class="num" style="background:#f8faff" id="scenTotalDeltaT">0</td><td class="num" style="background:#f8faff" id="scenTotalTons">${fmtTons(kpi.tons)}</td><td class="num" style="background:#f8faff" id="scenTotalGP">${fmtFull(Math.round(totalGP))}</td><td class="num" style="background:#f8faff" id="scenTotalDelta">—</td></tr>
-    </tbody></table></div>
+    </tbody>
+    <tfoot><tr class="total-row"><td>Итого</td><td class="num">${fmtTons(kpi.tons)}</td><td class="num">100%</td><td class="num">${fmtPct(kpi.margin)}</td><td class="num">${fmtFull(Math.round(kpi.gp_per_ton))}</td><td class="num">${fmtFull(Math.round(totalGP))}</td>
+    <td class="num" style="background:#f8faff" id="scenTotalDeltaT">0</td><td class="num" style="background:#f8faff" id="scenTotalTons">${fmtTons(kpi.tons)}</td><td class="num" style="background:#f8faff" id="scenTotalGP">${fmtFull(Math.round(totalGP))}</td><td class="num" style="background:#f8faff" id="scenTotalDelta">—</td></tr></tfoot>
+    </table></div>
   </div>
   <p style="font-size:11px;color:var(--text2);margin-top:4px">Введите изменение тоннажа (±) для каждой группы. Расчётная прибыль = (факт тонны + Δ) × факт прибыль/т. Это модель, не прогноз.</p>`;
   setupSortHandlers(el);
