@@ -792,7 +792,7 @@ function renderMonths(kpi, records) {
   
   const monthMap = {};
   months.forEach(m => {
-    monthMap[m] = { month: m, name: CUBE.month_names[m-1], revenue: 0, cost: 0, tons: 0 };
+    monthMap[m] = { month: m, name: CUBE.month_names[CUBE.months.indexOf(m)], revenue: 0, cost: 0, tons: 0 };
   });
 
   for (let i = 0; i < records.length; i++) {
