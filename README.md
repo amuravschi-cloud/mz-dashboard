@@ -39,27 +39,39 @@ mz-dashboard/
    - Привязка контрагентов к ответственным менеджерам и группам доступа («Покупатели металла», «Daske» и др.).
    - Автоматическое разделение на **Опт** (юридические лица) и **Розницу** (частные покупатели по точкам продаж).
 
-### Локальные пути к исходникам на рабочей станции:
-- Продажи 1С: `/Users/user/Documents/MZ Аналитика/для вал приб 1с бух_коды.xlsx`
-- Справочник номенклатуры: `/Users/user/Documents/MZ Аналитика/tmp/PBI_SprNomNew.xlsx`
-- Справочник менеджеров/клиентов: `/Users/user/Documents/mz_refs_data/managers_clients.json`
-- Сырой куб (JSON): `/Users/user/Documents/MZ Аналитика/dashboard_cube.json`
+### Локальные пути к исходникам на Mac:
+- **Выгрузка продаж 1С (факт с кодами):**  
+  `/Users/user/Documents/MZ Аналитика/для вал приб 1с бух_коды.xlsx`
+- **Справочник номенклатуры 1С (дерево категорий):**  
+  `/Users/user/Documents/MZ Аналитика/tmp/PBI_SprNomNew.xlsx`
+- **Справочник клиентов, менеджеров и групп доступа:**  
+  `/Users/user/Documents/mz_refs_data/managers_clients.json`
+- **Нешифрованный куб (JSON):**  
+  `/Users/user/Documents/MZ Аналитика/dashboard_cube.json`
+
+### Пути к тем же справочникам на рабочем VPS (`/opt/dashboard/`):
+- Справочник номенклатуры уже лежит в: `/opt/dashboard/incoming/PBI_SprNomNew.xlsx`
+- Сырые справочники контрагентов лежат в: `/opt/dashboard/dz/raw/` (`customers.json`, `employees.json`, `access_groups_ref.json`)
+- Пошаговая инструкция для агента по подключению к Caddy и пулу дашбордов: см. **[`VPS_DEPLOY.md`](VPS_DEPLOY.md)**.
 
 ---
 
 ## 3. Запуск генератора куба
 
-Для обновления данных (например, при добавлении октября/ноября/декабря):
+Для генерации зашифрованного payload:
 
 ```bash
 # 1. Установка зависимостей
 pip install -r requirements.txt
 
-# 2. Запуск генерации (с указанием путей к файлам)
+# 2. Запуск генерации на Mac (по умолчанию берёт локальные файлы):
+python3 generate_cube.py
+
+# 3. Или запуск с явными путями (например, на VPS):
 python3 generate_cube.py \
-  --sales "/path/to/для вал приб 1с бух_коды.xlsx" \
-  --nom-spr "/path/to/PBI_SprNomNew.xlsx" \
-  --clients-json "/path/to/managers_clients.json" \
+  --sales "/opt/dashboard/incoming/для вал приб 1с бух_коды.xlsx" \
+  --nom-spr "/opt/dashboard/incoming/PBI_SprNomNew.xlsx" \
+  --clients-json "/opt/dashboard/refs/managers_clients.json" \
   --out-cube "dashboard_cube.json" \
   --out-enc "data.enc.js" \
   --password "MZ2026"
